@@ -41,45 +41,7 @@ The default `--style ats` layout is designed to be easier for automated systems 
 
 Note: no PDF format can guarantee perfect parsing across every ATS. These choices are generally safer than heavily visual or multi-column layouts.
 
-## Quick start (Windows)
-
-### 1) Install Python on Windows
-
-1. Download and install Python 3.10+ from https://www.python.org/downloads/
-2. During install, check **“Add python.exe to PATH”**.
-3. Verify in PowerShell:
-
-```powershell
-python --version
-pip --version
-```
-
-If `python` isn’t found, re-run the installer and enable PATH. You may also need to disable the Microsoft Store “App execution alias” for Python in Windows settings.
-
-### 2) Create and activate a virtual environment
-
-From the repository root:
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-```
-
-If PowerShell blocks activation:
-
-```powershell
-Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
-.\.venv\Scripts\Activate.ps1
-```
-
-### 3) Install dependencies
-
-```powershell
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-### 4) Generate a PDF
+## Generate a PDF
 
 Run with your own input/output filenames:
 
@@ -100,14 +62,6 @@ python generate_resume_pdf.py --data sample_input.json --style pretty --output r
 ```
 
 This writes `resume_output.pdf` (or your chosen `--output`) to the repository root.
-
-## Customizing the sample input
-
-Edit `sample_input.json` (it contains placeholder content), then run:
-
-```powershell
-python generate_resume_pdf.py --data sample_input.json --output resume_from_json.pdf
-```
 
 ## CLI options
 
@@ -134,6 +88,44 @@ The JSON file is expected to be an object with these keys (all optional):
 - `certifications` (array of strings)
 
 If a section is missing or empty, it will simply render as empty in the PDF.
+
+## Setup (Windows)
+
+### 1) Install Python
+
+1. Download and install Python 3.10+ from https://www.python.org/downloads/
+2. During install, check **“Add python.exe to PATH”**.
+3. Verify in PowerShell:
+
+```powershell
+python --version
+pip --version
+```
+
+If `python` isn’t found, re-run the installer and enable PATH. You may also need to disable the Microsoft Store “App execution alias” for Python in Windows settings.
+
+### 2) Create and activate a virtual environment
+
+From the repository root:
+
+```powershell
+python -m venv .venv
+\.venv\Scripts\Activate.ps1
+```
+
+If PowerShell blocks activation:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+\.venv\Scripts\Activate.ps1
+```
+
+### 3) Install dependencies
+
+```powershell
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
 
 ## Troubleshooting
 
