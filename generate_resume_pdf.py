@@ -40,39 +40,16 @@ class ResumeData:
 
 def _resume_from_mapping(payload: dict[str, Any]) -> ResumeData:
     return ResumeData(
-        name=str(payload.get("name", "Jordan Taylor")),
-        title=str(payload.get("title", "Software Engineer")),
-        location=str(payload.get("location", "Seattle, WA (Open to Remote)")),
-        phone=str(payload.get("phone", "(555) 123-4567")),
-        email=str(payload.get("email", "jordan.taylor@example.com")),
-        website=str(payload.get("website", "jordantaylor.dev")),
-        linkedin=str(payload.get("linkedin", "linkedin.com/in/jordantaylor")),
-        github=str(payload.get("github", "github.com/jordantaylor")),
-        summary=str(
-            payload.get(
-                "summary",
-                "Product-minded software engineer with 5+ years building reliable web applications and APIs. "
-                "Strong in TypeScript/Node.js and Python, with a track record of improving performance, "
-                "developer experience, and observability across teams.",
-            )
-        ),
-        skills=list(payload.get("skills", []))
-        or [
-            "TypeScript",
-            "Node.js",
-            "React",
-            "Python",
-            "PostgreSQL",
-            "Redis",
-            "REST",
-            "GraphQL",
-            "Docker",
-            "Kubernetes",
-            "AWS",
-            "CI/CD",
-            "Playwright",
-            "OpenTelemetry",
-        ],
+        name=str(payload.get("name", "")),
+        title=str(payload.get("title", "")),
+        location=str(payload.get("location", "")),
+        phone=str(payload.get("phone", "")),
+        email=str(payload.get("email", "")),
+        website=str(payload.get("website", "")),
+        linkedin=str(payload.get("linkedin", "")),
+        github=str(payload.get("github", "")),
+        summary=str(payload.get("summary", "")),
+        skills=list(payload.get("skills", [])),
         experience=[
             (
                 str(item.get("company", "")),
@@ -81,8 +58,7 @@ def _resume_from_mapping(payload: dict[str, Any]) -> ResumeData:
                 list(item.get("bullets", [])),
             )
             for item in payload.get("experience", [])
-        ]
-        or build_sample_data().experience,
+        ],
         projects=[
             (
                 str(item.get("name", "")),
@@ -90,8 +66,7 @@ def _resume_from_mapping(payload: dict[str, Any]) -> ResumeData:
                 list(item.get("bullets", [])),
             )
             for item in payload.get("projects", [])
-        ]
-        or build_sample_data().projects,
+        ],
         education=[
             (
                 str(item.get("degree", "")),
@@ -99,10 +74,8 @@ def _resume_from_mapping(payload: dict[str, Any]) -> ResumeData:
                 str(item.get("dates", "")),
             )
             for item in payload.get("education", [])
-        ]
-        or build_sample_data().education,
-        certifications=list(payload.get("certifications", []))
-        or build_sample_data().certifications,
+        ],
+        certifications=list(payload.get("certifications", [])),
     )
 
 
@@ -223,68 +196,6 @@ def _draw_tag_row(canvas: Canvas, tags: List[str], x: float, y: float, w: float)
         canvas.drawString(x, y, line)
         y -= 13
     return y
-
-
-def build_sample_data() -> ResumeData:
-    return ResumeData(
-        name="Jordan Taylor",
-        title="Software Engineer",
-        location="Seattle, WA (Open to Remote)",
-        phone="(555) 123-4567",
-        email="jordan.taylor@example.com",
-        website="jordantaylor.dev",
-        linkedin="linkedin.com/in/jordantaylor",
-        github="github.com/jordantaylor",
-        summary=(
-            "Product-minded software engineer with 5+ years building reliable web applications and APIs. "
-            "Strong in TypeScript/Node.js and Python, with a track record of improving performance, "
-            "developer experience, and observability across teams."
-        ),
-        skills=[
-            "TypeScript", "Node.js", "React", "Python", "PostgreSQL", "Redis", "REST", "GraphQL",
-            "Docker", "Kubernetes", "AWS", "CI/CD", "Playwright", "OpenTelemetry",
-        ],
-        experience=[
-            (
-                "Acme Cloud", "Senior Software Engineer", "2022 - Present",
-                [
-                    "Led migration of a monolith to modular services, reducing deploy time from 45 min to 12 min.",
-                    "Implemented request tracing and structured logging (OpenTelemetry), cutting MTTR by 35%.",
-                    "Built a rate-limited public API with robust auth and monitoring; supported 50M+ monthly requests.",
-                ],
-            ),
-            (
-                "BrightApps", "Software Engineer", "2019 - 2022",
-                [
-                    "Owned checkout performance improvements (React + Node), raising conversion by 2.1%.",
-                    "Created reusable component library patterns, reducing UI defects and speeding feature delivery.",
-                    "Automated integration tests (Playwright) and CI checks, reducing regressions by 40%.",
-                ],
-            ),
-        ],
-        projects=[
-            (
-                "Telemetry Dashboard", "GitHub: github.com/jordantaylor/telemetry-dashboard",
-                [
-                    "Real-time dashboard for service health: traces, logs, and metrics unified in one view.",
-                    "Optimized queries and caching; kept p95 interactions under 150ms for typical workloads.",
-                ],
-            ),
-            (
-                "Resume PDF Generator", "Python + ReportLab",
-                [
-                    "Generates a clean, single-page resume PDF from structured data.",
-                    "Designed for easy customization: update text and rerun script to regenerate PDF.",
-                ],
-            ),
-        ],
-        education=[
-            ("B.S. Computer Science", "State University", "2015 - 2019"),
-        ],
-        certifications=[
-            "AWS Certified Developer – Associate",
-        ],
-    )
 
 
 def generate_pdf(output_path: str, data: ResumeData, *, style: Style = "ats") -> None:
@@ -426,13 +337,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Generate a one-page PDF resume.")
     parser.add_argument(
         "--output",
-        default="resume_sample.pdf",
-        help="Output PDF path (default: resume_sample.pdf)",
+        default="resume_output.pdf",
+        help="Output PDF path (default: resume_output.pdf)",
     )
     parser.add_argument(
         "--data",
-        default="",
-        help="Optional JSON file with resume fields. If omitted, uses built-in sample values.",
+        required=True,
+        help="Path to a JSON file with resume fields.",
     )
     parser.add_argument(
         "--style",
@@ -442,13 +353,16 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    if args.data:
-        payload = json.loads(Path(args.data).read_text(encoding="utf-8"))
-        if not isinstance(payload, dict):
-            raise ValueError("JSON root must be an object")
-        data = _resume_from_mapping(payload)
-    else:
-        data = build_sample_data()
+    data_path = Path(args.data)
+    if not data_path.exists():
+        raise FileNotFoundError(
+            f"Resume JSON not found: {data_path}. Provide --data <file.json>."
+        )
+
+    payload = json.loads(data_path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("JSON root must be an object")
+    data = _resume_from_mapping(payload)
 
     generate_pdf(str(args.output), data, style=args.style)
     print(f"Wrote {args.output}")

@@ -1,21 +1,21 @@
 # PDF Resume Generator (Sample)
 
-This repo generates a clean, one-page PDF resume from structured data.
+This repository generates a clean, one-page PDF resume from structured data.
 
-## Why use this instead of a template editor?
+## Rationale
 
-Generating your resume via code can be a practical advantage when you care about consistency and automated parsing:
+Generating a resume via code can be useful when you care about deterministic formatting and automated text extraction:
 
 - **Consistent formatting:** the PDF layout is deterministic (update content → regenerate → same spacing/margins every time).
 - **Machine-readable text layer:** the output is drawn as real text (not a screenshot), which is typically easier for ATS/HR systems to extract.
 - **ATS-friendly option:** `--style ats` avoids common parsing pitfalls like multi-column alignment and right-justified date columns.
 
-This can improve extractability, but it can’t guarantee passing filters or getting interviews—content relevance still matters.
+This can improve extractability, but it does not guarantee screening outcomes; content relevance still matters.
 
 - Primary script: `generate_resume_pdf.py`
 - Dependency list: `requirements.txt`
-- Editable sample data: `resume_sample.json`
-- Output: `resume_sample.pdf` (or whatever you pass via `--output`)
+- Resume input data: `sample_input.json` (passed via `--data`)
+- Output (default): `resume_output.pdf` (or whatever you pass via `--output`)
 
 ## What it is
 
@@ -25,9 +25,7 @@ This approach is useful when you want repeatable formatting and easy regeneratio
 
 ## How it works (high level)
 
-- `generate_resume_pdf.py` builds a `ResumeData` object.
-  - If you don’t pass `--data`, it uses built-in sample values.
-  - If you pass `--data some.json`, it loads JSON and fills missing fields with sample defaults.
+- `generate_resume_pdf.py` loads `sample_input.json` (or the file you pass via `--data`) and builds a `ResumeData` object.
 - The script uses ReportLab’s `Canvas` to draw text and section dividers onto a letter-sized page.
 - It wraps long lines so content fits within the margins.
 - It saves a single-page PDF.
@@ -41,7 +39,7 @@ The default `--style ats` layout is designed to be easier for automated systems 
 - ASCII bullets (`-`) instead of Unicode bullets
 - Labeled contact lines (e.g., `Email: ...`) to reduce ambiguity
 
-Note: no PDF format can guarantee perfect parsing across every ATS, but these choices tend to be safer than heavily visual layouts.
+Note: no PDF format can guarantee perfect parsing across every ATS. These choices are generally safer than heavily visual or multi-column layouts.
 
 ## Quick start (Windows)
 
@@ -56,11 +54,11 @@ python --version
 pip --version
 ```
 
-If `python` isn’t found, re-run the installer and enable PATH, or use the “App execution aliases” settings in Windows to disable the Microsoft Store alias for Python.
+If `python` isn’t found, re-run the installer and enable PATH. You may also need to disable the Microsoft Store “App execution alias” for Python in Windows settings.
 
 ### 2) Create and activate a virtual environment
 
-From the repo folder:
+From the repository root:
 
 ```powershell
 python -m venv .venv
@@ -83,32 +81,44 @@ pip install -r requirements.txt
 
 ### 4) Generate a PDF
 
-Use built-in sample data:
+Run with your own input/output filenames:
 
 ```powershell
-python generate_resume_pdf.py
+python generate_resume_pdf.py --data <your_resume.json> --output <your_resume.pdf>
 ```
 
-This writes `resume_sample.pdf` in the repo directory.
-
-## Using your own (still sample) values
-
-Edit `resume_sample.json` (it’s already filled with placeholder/sample content), then run:
+Example (using the included sample input):
 
 ```powershell
-python generate_resume_pdf.py --data resume_sample.json --output resume_from_json.pdf
+python generate_resume_pdf.py --data sample_input.json --output resume_output.pdf
+```
+
+Optional: generate a more visually aligned version (for comparison):
+
+```powershell
+python generate_resume_pdf.py --data sample_input.json --style pretty --output resume_sample_pretty.pdf
+```
+
+This writes `resume_output.pdf` (or your chosen `--output`) to the repository root.
+
+## Customizing the sample input
+
+Edit `sample_input.json` (it contains placeholder content), then run:
+
+```powershell
+python generate_resume_pdf.py --data sample_input.json --output resume_from_json.pdf
 ```
 
 ## CLI options
 
-- `--output <path>`: output PDF path (default: `resume_sample.pdf`)
-- `--data <path>`: optional JSON file with resume content
-- `--style ats|pretty`: layout style (default: `ats`)
+- `--output <path>`: output PDF path (default: `resume_output.pdf`)
+- `--data <path>`: JSON file with resume content (required)
+- `--style <ats|pretty>`: layout style (default: `ats`).
 
 Example:
 
 ```powershell
-python generate_resume_pdf.py --data resume_sample.json --output Daniel_Resume.pdf --style ats
+python generate_resume_pdf.py --data sample_input.json --output sample_resume.pdf --style ats
 ```
 
 ## JSON format
@@ -123,13 +133,13 @@ The JSON file is expected to be an object with these keys (all optional):
 - `education` (array of objects: `{ degree, school, dates }`)
 - `certifications` (array of strings)
 
-If a section is missing or empty, the script falls back to built-in sample values for that section.
+If a section is missing or empty, it will simply render as empty in the PDF.
 
 ## Troubleshooting
 
-- **`pip` or `python` not recognized**: Python isn’t on PATH. Reinstall Python and check “Add to PATH”.
+- **`pip` or `python` not recognized**: Python is not on PATH. Reinstall Python and select “Add to PATH”.
 - **Activation blocked**: run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, then re-activate.
-- **PDF not updating**: ensure you’re running in the repo folder and opening the newest output file.
+- **PDF not updating**: ensure you are running from the repository root and opening the newest output file.
 
 ## Notes
 
