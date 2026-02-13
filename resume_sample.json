@@ -1,0 +1,77 @@
+{
+  "name": "Jordan Taylor",
+  "title": "Software Engineer",
+  "location": "Seattle, WA (Open to Remote)",
+  "phone": "(555) 123-4567",
+  "email": "jordan.taylor@example.com",
+  "website": "jordantaylor.dev",
+  "linkedin": "linkedin.com/in/jordantaylor",
+  "github": "github.com/jordantaylor",
+  "summary": "Product-minded software engineer with 5+ years building reliable web applications and APIs. Strong in TypeScript/Node.js and Python, with a track record of improving performance, developer experience, and observability across teams.",
+  "skills": [
+    "TypeScript",
+    "Node.js",
+    "React",
+    "Python",
+    "PostgreSQL",
+    "Redis",
+    "REST",
+    "GraphQL",
+    "Docker",
+    "Kubernetes",
+    "AWS",
+    "CI/CD",
+    "Playwright",
+    "OpenTelemetry"
+  ],
+  "experience": [
+    {
+      "company": "Acme Cloud",
+      "role": "Senior Software Engineer",
+      "dates": "2022 - Present",
+      "bullets": [
+        "Led migration of a monolith to modular services, reducing deploy time from 45 min to 12 min.",
+        "Implemented request tracing and structured logging (OpenTelemetry), cutting MTTR by 35%.",
+        "Built a rate-limited public API with robust auth and monitoring; supported 50M+ monthly requests."
+      ]
+    },
+    {
+      "company": "BrightApps",
+      "role": "Software Engineer",
+      "dates": "2019 - 2022",
+      "bullets": [
+        "Owned checkout performance improvements (React + Node), raising conversion by 2.1%.",
+        "Created reusable component library patterns, reducing UI defects and speeding feature delivery.",
+        "Automated integration tests (Playwright) and CI checks, reducing regressions by 40%."
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "Telemetry Dashboard",
+      "meta": "GitHub: github.com/jordantaylor/telemetry-dashboard",
+      "bullets": [
+        "Real-time dashboard for service health: traces, logs, and metrics unified in one view.",
+        "Optimized queries and caching; kept p95 interactions under 150ms for typical workloads."
+      ]
+    },
+    {
+      "name": "Resume PDF Generator",
+      "meta": "Python + ReportLab",
+      "bullets": [
+        "Generates a clean, single-page resume PDF from structured data.",
+        "Designed for easy customization: update text and rerun script to regenerate PDF."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "B.S. Computer Science",
+      "school": "State University",
+      "dates": "2015 - 2019"
+    }
+  ],
+  "certifications": [
+    "AWS Certified Developer – Associate"
+  ]
+}
