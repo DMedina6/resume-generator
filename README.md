@@ -1,12 +1,10 @@
-# PDF Resume Generator (Sample)
+# PDF Resume Generator 
 
 This repository generates a clean, one-page PDF resume from structured data.
 
 ## Overview
 
 This is a small Python + ReportLab tool that turns a resume JSON file into a print-ready, one-page PDF.
-
-ATS = **Applicant Tracking System** (software used by companies/recruiters to parse, search, and filter resumes). The generator aims for ATS-friendlier output by keeping content single-column and text-first. Default layout is `--style ats`.
 
 - Primary script: `generate_resume_pdf.py`
 - Dependencies: `requirements.txt`
@@ -21,6 +19,8 @@ ATS = **Applicant Tracking System** (software used by companies/recruiters to pa
 - It saves a single-page PDF.
 
 ### ATS-friendly output
+
+ATS = **Applicant Tracking System** (software used by companies/recruiters to parse, search, and filter resumes). The generator aims for ATS-friendlier output.
 
 The default `--style ats` layout is designed to be easier for automated systems to extract:
 
