@@ -6,16 +6,15 @@ This repository generates a clean, one-page PDF resume from structured data.
 
 This is a small Python + ReportLab tool that turns a resume JSON file into a print-ready, one-page PDF.
 
-- Primary script: `generate_resume_pdf.py`
-- Dependencies: `requirements.txt`
-- Example input / template: `sample_input.json` (passed via `--data`)
-- Output (default): `resume_output.pdf` (or whatever you pass via `--output`)
+- Windows executable: `resume-generator.exe`
+- Python script: `resume_generator.py`
+- Example input / template JSON: `sample_input.json`
 
 ### ATS-friendly output
 
 ATS = **Applicant Tracking System** (software used by companies/recruiters to parse, search, and filter resumes). The generator aims for ATS-friendlier output.
 
-The layout is designed to be easier for automated systems to extract:
+The layout is designed to be optimized for automated systems to extract:
 
 - Single-column, top-to-bottom flow
 - Left-aligned dates (no right-aligned columns)
@@ -38,47 +37,6 @@ If you have a packaged executable (for example `resume-generator.exe`), you can 
 .\resume-generator.exe --data .\sample_input.json --output .\resume_output.pdf
 ```
 
-## How it works
-
-- `generate_resume_pdf.py` loads the JSON file you pass via `--data` and builds a `ResumeData` object.
-- The script uses ReportLab’s `Canvas` to draw text and section dividers onto a letter-sized page.
-- It wraps long lines so content fits within the margins.
-- It saves a single-page PDF.
-
-## Generate a PDF
-
-Run with your own input/output filenames:
-
-```powershell
-python generate_resume_pdf.py --data <your_resume.json> --output <your_resume.pdf>
-```
-
-Example (using the included sample input):
-
-```powershell
-python generate_resume_pdf.py --data sample_input.json --output resume_output.pdf
-```
-
-Optional: generate a more visually aligned version (for comparison):
-
-```powershell
-python generate_resume_pdf.py --data sample_input.json --style pretty --output resume_sample_pretty.pdf
-```
-
-This writes `resume_output.pdf` (or your chosen `--output`) to the repository root.
-
-## CLI options
-
-- `--output <path>`: output PDF path (default: `resume_output.pdf`)
-- `--data <path>`: JSON file with resume content (required)
-- `--style <ats|pretty>`: layout style (default: `ats`).
-
-Example:
-
-```powershell
-python generate_resume_pdf.py --data sample_input.json --output sample_resume.pdf --style ats
-```
-
 ## JSON format
 
 The JSON file is expected to be an object with these keys (all optional):
@@ -92,6 +50,41 @@ The JSON file is expected to be an object with these keys (all optional):
 - `certifications` (array of strings)
 
 If a field/section is missing or empty, it will be skipped (not rendered) in the PDF.
+
+## How it works
+
+- `resume_generator.py` loads the JSON file you pass via `--data` and builds a `ResumeData` object.
+- The script uses ReportLab’s `Canvas` to draw text and section dividers onto a letter-sized page.
+- It wraps long lines so content fits within the margins.
+- It saves a single-page PDF.
+
+## Generate a PDF
+
+Run with your own input/output filenames:
+
+```powershell
+python resume_generator.py --data <your_resume.json> --output <your_resume.pdf>
+```
+
+Example (using the included sample input):
+
+```powershell
+python resume_generator.py --data sample_input.json --output resume_output.pdf
+```
+
+Optional: generate a more visually aligned version (for comparison):
+
+```powershell
+python resume_generator.py --data sample_input.json --style pretty --output resume_sample_pretty.pdf
+```
+
+This writes `resume_output.pdf` (or your chosen `--output`) to the repository root.
+
+## CLI options
+
+- `--output <path>`: output PDF path (default: `resume_output.pdf`)
+- `--data <path>`: JSON file with resume content (required)
+- `--style <ats|pretty>`: layout style (default: `ats`).
 
 ## Setup (Windows)
 
@@ -133,34 +126,22 @@ pip install -r requirements.txt
 
 ## Build a Windows executable (no Python required)
 
-If you want to run this on a machine that does **not** have Python installed, you can
-bundle it into a standalone `.exe` with PyInstaller.
-
-### Option A: Quick one-file `.exe` (recommended)
-
 From the repo root (with your venv activated):
 
 ```powershell
 pip install pyinstaller
-pyinstaller --onefile --name resume-generator generate_resume_pdf.py
+pyinstaller --onefile --name resume-generator resume_generator.py
 ```
 
 The executable will be created at:
 
-- `dist\resume-generator.exe`
+- `resume-generator.exe`
 
 Run it like this (you still pass a JSON file as input):
 
 ```powershell
-.\dist\resume-generator.exe --data sample_input.json --output resume_output.pdf
+.\resume-generator.exe --data sample_input.json --output resume_output.pdf
 ```
-
-### Notes / gotchas
-
-- You still need to ship the `.json` input file(s) you want to use.
-- The first run can be slower because the one-file bundle self-extracts.
-- Antivirus can occasionally flag fresh PyInstaller builds; this is common for unsigned executables.
-- If you want a folder-based build (often faster startup), drop `--onefile`.
 
 ## Troubleshooting
 
