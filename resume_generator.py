@@ -30,7 +30,7 @@ from __future__ import annotations
 import argparse
 import json
 from dataclasses import dataclass
-from datetime import date
+
 from pathlib import Path
 from typing import Any, Iterable, List, Literal, Tuple
 
@@ -113,7 +113,6 @@ class Theme:
     body: TextStyle
     item_header: TextStyle
     muted: TextStyle
-    footer: TextStyle
     rule_color: colors.Color
 
 
@@ -125,7 +124,6 @@ DEFAULT_THEME = Theme(
     body=TextStyle("Helvetica", 10, colors.HexColor("#222222")),
     item_header=TextStyle("Helvetica-Bold", 11, colors.HexColor("#222222")),
     muted=TextStyle("Helvetica", 10, colors.HexColor("#555555")),
-    footer=TextStyle("Helvetica", 8, colors.HexColor("#888888")),
     rule_color=colors.HexColor("#D6D6D6"),
 )
 
@@ -725,10 +723,6 @@ def generate_pdf(
         y = _draw_certifications_section(c, data, x=x, y=y, content_w=content_w, style=style)
         y = _draw_experience_section(c, data, x=x, y=y, content_w=content_w, style=style)
         y = _draw_projects_section(c, data, x=x, y=y, content_w=content_w, style=style)
-
-        # Footer timestamp (subtle). Remove if you prefer a "static" resume file.
-        _apply_text_style(c, _theme().footer)
-        c.drawRightString(x + content_w, margin * 0.6, f"Generated {date.today().isoformat()}")
     finally:
         _ACTIVE_THEME = previous_theme
 
