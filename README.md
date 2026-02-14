@@ -8,21 +8,14 @@ This is a small Python + ReportLab tool that turns a resume JSON file into a pri
 
 - Primary script: `generate_resume_pdf.py`
 - Dependencies: `requirements.txt`
-- Example input: `sample_input.json` (passed via `--data`)
+- Example input / template: `sample_input.json` (passed via `--data`)
 - Output (default): `resume_output.pdf` (or whatever you pass via `--output`)
-
-## How it works
-
-- `generate_resume_pdf.py` loads the JSON file you pass via `--data` and builds a `ResumeData` object.
-- The script uses ReportLab’s `Canvas` to draw text and section dividers onto a letter-sized page.
-- It wraps long lines so content fits within the margins.
-- It saves a single-page PDF.
 
 ### ATS-friendly output
 
 ATS = **Applicant Tracking System** (software used by companies/recruiters to parse, search, and filter resumes). The generator aims for ATS-friendlier output.
 
-The default `--style ats` layout is designed to be easier for automated systems to extract:
+The layout is designed to be easier for automated systems to extract:
 
 - Single-column, top-to-bottom flow
 - Left-aligned dates (no right-aligned columns)
@@ -30,6 +23,27 @@ The default `--style ats` layout is designed to be easier for automated systems 
 - Labeled contact lines (e.g., `Email: ...`) to reduce ambiguity
 
 Note: no PDF format can guarantee perfect parsing across every ATS. These choices are generally safer than heavily visual or multi-column layouts.
+
+## Run the Windows `.exe` (no Python)
+
+If you have a packaged executable (for example `resume-generator.exe`), you can run it from PowerShell.
+
+1. Put these files in the same folder:
+  - `resume-generator.exe`
+  - `sample_input.json` (edit it to match your resume)
+2. Open PowerShell in that folder.
+3. Run:
+
+```powershell
+.\resume-generator.exe --data .\sample_input.json --output .\resume_output.pdf
+```
+
+## How it works
+
+- `generate_resume_pdf.py` loads the JSON file you pass via `--data` and builds a `ResumeData` object.
+- The script uses ReportLab’s `Canvas` to draw text and section dividers onto a letter-sized page.
+- It wraps long lines so content fits within the margins.
+- It saves a single-page PDF.
 
 ## Generate a PDF
 
