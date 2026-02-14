@@ -12,9 +12,20 @@ Mental model (ReportLab basics):
 Layout approach:
 - Each section renderer takes a starting `y` and returns the next `y`.
 - Empty fields/sections are skipped so we never render "dangling" labels or blank lines.
+
+If you're new to ReportLab:
+- Think of `Canvas` as a "pen" you draw with. There is no automatic layout: you must
+    choose fonts, positions, and line spacing yourself.
+- Most functions in this file follow the same pattern:
+    1) draw some text at the current y
+    2) subtract from y to move down
+    3) return the updated y
 """
 
 from __future__ import annotations
+
+# `from __future__ import annotations` lets us write type hints that refer to classes
+# defined later, and generally keeps type hints from affecting runtime performance.
 
 import argparse
 import json
@@ -33,6 +44,9 @@ from reportlab.pdfgen.canvas import Canvas
 
 Style = Literal["ats", "pretty"]
 
+# `Style` is a *type hint* only. At runtime it's just a string.
+# We use it to keep `--style` values constrained to "ats" or "pretty".
+
 # Data shapes used within ResumeData. These aliases are purely for readability.
 ExperienceItem = Tuple[str, str, str, List[str]]  # (company, role, dates, bullets)
 ProjectItem = Tuple[str, str, List[str]]  # (name, meta, bullets)
@@ -41,7 +55,8 @@ EducationItem = Tuple[str, str, str]  # (degree, school, dates)
 
 def _as_text(value: Any) -> str:
     """Convert JSON values to display text (None/whitespace -> "")."""
-
+    # JSON can contain `null` (Python: None) or values with extra whitespace.
+    # Normalizing here keeps the drawing code simple.
     if value is None:
         return ""
     return str(value).strip()
@@ -73,10 +88,18 @@ class ResumeData:
     certifications: List[str]
 
 
+# ----------------------------
+# JSON -> ResumeData
+# ----------------------------
+
+
 def _resume_from_mapping(payload: dict[str, Any]) -> ResumeData:
     """Convert a JSON object into normalized `ResumeData` (missing/blank -> empty)."""
     # Keep this permissive: callers can omit keys, and empty strings are treated as
     # "do not render".
+    #
+    # Tip if you're newer to Python: the `payload.get("key", default)` pattern returns
+    # the value for "key" if it exists, otherwise it returns the given default.
     return ResumeData(
         name=_as_text(payload.get("name", "")),
         title=_as_text(payload.get("title", "")),
@@ -87,6 +110,8 @@ def _resume_from_mapping(payload: dict[str, Any]) -> ResumeData:
         linkedin=_as_text(payload.get("linkedin", "")),
         github=_as_text(payload.get("github", "")),
         summary=_as_text(payload.get("summary", "")),
+        # The list-comprehension syntax here means:
+        # "for each element in the input list, convert it to text, and collect results"
         skills=[_as_text(s) for s in payload.get("skills", [])],
         experience=[
             (
@@ -122,6 +147,8 @@ def _register_fonts() -> None:
     # If these TTFs aren't present, ReportLab will use built-in Helvetica.
     # Registering fonts makes them available to `setFont`, but we still need to opt-in
     # by passing the registered font names (e.g., "Inter").
+    #
+    # This is intentionally "best effort" so the script runs on any machine.
     try:
         pdfmetrics.registerFont(TTFont("Inter", "Inter-Regular.ttf"))
         pdfmetrics.registerFont(TTFont("Inter-Bold", "Inter-Bold.ttf"))
@@ -144,10 +171,14 @@ def _wrap_text(
     """
     if not text or not text.strip():
         return []
+
+    # Split by whitespace into "words". We then build up lines word-by-word until
+    # adding another word would exceed `max_width`.
     words = text.split()
     lines: List[str] = []
     current: List[str] = []
 
+    # In ReportLab, measuring and drawing both depend on the active font.
     canvas.setFont(font_name, font_size)
     for word in words:
         candidate = (" ".join(current + [word])).strip()
@@ -164,6 +195,7 @@ def _wrap_text(
 
 def _draw_rule(canvas: Canvas, x: float, y: float, w: float) -> None:
     """Draw a light horizontal divider."""
+    # `line(x1, y1, x2, y2)` draws a straight line in the current stroke color.
     canvas.setStrokeColor(colors.HexColor("#D6D6D6"))
     canvas.setLineWidth(1)
     canvas.line(x, y, x + w, y)
@@ -179,6 +211,7 @@ def _draw_section_title(
     style: Style,
 ) -> float:
     """Draw a section heading and return the next baseline y position."""
+    # ReportLab uses *stateful* drawing: font/color settings stick until changed.
     canvas.setFont("Helvetica-Bold", 11)
     canvas.setFillColor(colors.HexColor("#222222"))
 
@@ -208,6 +241,8 @@ def _draw_bullets(
     """
     bullet_indent = 10  # where the bullet glyph is drawn
     text_indent = 22  # where wrapped text starts
+
+    # `leading` is the vertical spacing between baselines.
 
     canvas.setFillColor(colors.HexColor("#222222"))
     for b in bullets:
@@ -242,7 +277,8 @@ def _draw_tag_row(canvas: Canvas, tags: List[str], x: float, y: float, w: float)
     canvas.setFillColor(colors.HexColor("#222222"))
 
     line = ""
-    for i, tag in enumerate(tags):
+    # We build a comma-separated line until it would overflow, then start a new line.
+    for tag in tags:
         piece = (", " if line else "") + tag
         candidate = line + piece
         if canvas.stringWidth(candidate, "Helvetica", 10) <= w:
@@ -282,6 +318,7 @@ def _draw_header(
     title = _clean_str(data.title)
 
     if name:
+        # `setFillColor` controls text color; `setFont` controls font face/size.
         c.setFillColor(colors.HexColor("#111111"))
         c.setFont("Helvetica-Bold", 20)
         c.drawString(x, y, name)
@@ -310,6 +347,7 @@ def _draw_header(
     contact_lines: List[str] = []
     if style == "ats":
         # ATS: prefer predictable, labeled lines over dense inline separators.
+        # We build each contact line only if there is at least one real value.
         if location:
             contact_lines.append(f"Location: {location}")
         if phone or email:
@@ -343,6 +381,7 @@ def _draw_header(
             )
 
     if contact_lines:
+        # Each `contact_lines` entry may still be long, so we wrap again.
         for line in contact_lines:
             for wrapped in _wrap_text(c, line, max_width=content_w, font_name="Helvetica", font_size=9):
                 c.drawString(x, y, wrapped)
@@ -376,6 +415,7 @@ def _draw_summary_section(
     y = _draw_section_title(c, "Summary", x, y, content_w, style=style)
     c.setFont("Helvetica", 10)
     c.setFillColor(colors.HexColor("#222222"))
+    # Summary is treated as one paragraph and wrapped across multiple lines.
     for line in _wrap_text(c, summary, max_width=content_w, font_name="Helvetica", font_size=10):
         c.drawString(x, y, line)
         y -= 13
@@ -446,6 +486,7 @@ def _draw_experience_section(
             if dates:
                 c.setFont("Helvetica", 10)
                 c.setFillColor(colors.HexColor("#555555"))
+                # `drawRightString` aligns the text so its *right edge* is at this x.
                 c.drawRightString(x + content_w, y, dates)
 
         y -= 14
@@ -582,6 +623,7 @@ def generate_pdf(output_path: str, data: ResumeData, *, style: Style = "ats") ->
     content_w = page_w - 2 * margin
 
     c = Canvas(output_path, pagesize=LETTER)
+    # `setTitle` sets PDF metadata (what you see in some PDF viewers).
     c.setTitle(f"Resume - {data.name}")
 
     x = margin
@@ -603,11 +645,13 @@ def generate_pdf(output_path: str, data: ResumeData, *, style: Style = "ats") ->
     c.drawRightString(x + content_w, margin * 0.6, f"Generated {date.today().isoformat()}")
 
     c.showPage()
+    # `save()` finalizes the PDF file.
     c.save()
 
 
 def main() -> None:
     """CLI entrypoint."""
+    # `argparse` turns command-line flags into Python variables.
     parser = argparse.ArgumentParser(description="Generate a one-page PDF resume.")
     parser.add_argument(
         "--output",
@@ -628,6 +672,7 @@ def main() -> None:
     args = parser.parse_args()
 
     data_path = Path(args.data)
+    # `Path` is a nicer way to work with file paths than raw strings.
     if not data_path.exists():
         raise FileNotFoundError(
             f"Resume JSON not found: {data_path}. Provide --data <file.json>."
@@ -635,6 +680,7 @@ def main() -> None:
 
     # Read and parse JSON as UTF-8 so non-ASCII characters (e.g., en-dashes) work.
     payload = json.loads(data_path.read_text(encoding="utf-8"))
+    # We expect the JSON file to look like `{ "name": "...", "skills": [...], ... }`.
     if not isinstance(payload, dict):
         raise ValueError("JSON root must be an object")
     data = _resume_from_mapping(payload)
