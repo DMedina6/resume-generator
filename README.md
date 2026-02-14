@@ -117,6 +117,37 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
+## Build a Windows executable (no Python required)
+
+If you want to run this on a machine that does **not** have Python installed, you can
+bundle it into a standalone `.exe` with PyInstaller.
+
+### Option A: Quick one-file `.exe` (recommended)
+
+From the repo root (with your venv activated):
+
+```powershell
+pip install pyinstaller
+pyinstaller --onefile --name resume-generator generate_resume_pdf.py
+```
+
+The executable will be created at:
+
+- `dist\resume-generator.exe`
+
+Run it like this (you still pass a JSON file as input):
+
+```powershell
+.\dist\resume-generator.exe --data sample_input.json --output resume_output.pdf
+```
+
+### Notes / gotchas
+
+- You still need to ship the `.json` input file(s) you want to use.
+- The first run can be slower because the one-file bundle self-extracts.
+- Antivirus can occasionally flag fresh PyInstaller builds; this is common for unsigned executables.
+- If you want a folder-based build (often faster startup), drop `--onefile`.
+
 ## Troubleshooting
 
 - **`pip` or `python` not recognized**: Python is not on PATH. Reinstall Python and select “Add to PATH”.
