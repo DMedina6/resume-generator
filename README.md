@@ -17,6 +17,7 @@ ATS = **Applicant Tracking System** (software used by companies/recruiters to pa
 The layout is designed to be optimized for automated systems to extract:
 
 - Single-column, top-to-bottom flow
+- Deterministic, predictable formatting for consistent parsing
 - Left-aligned dates (no right-aligned columns)
 - ASCII bullets (`-`) instead of Unicode bullets
 - Labeled contact lines (e.g., `Email: ...`) to reduce ambiguity
