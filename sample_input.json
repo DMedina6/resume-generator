@@ -4,9 +4,9 @@
   "location": "Seattle, WA (Open to Remote)",
   "phone": "(555) 123-4567",
   "email": "jordan.taylor@example.com",
-  "website": "jordantaylor.dev",
-  "linkedin": "linkedin.com/in/jordantaylor",
-  "github": "github.com/jordantaylor",
+  "website": "yourname.dev",
+  "linkedin": "linkedin.com/in/your-handle",
+  "github": "github.com/your-handle",
   "summary": "Product-minded software engineer with 5+ years building reliable web applications and APIs. Strong in TypeScript/Node.js and Python, with a track record of improving performance, developer experience, and observability across teams.",
   "skills": [
     "TypeScript",
@@ -49,7 +49,7 @@
   "projects": [
     {
       "name": "Telemetry Dashboard",
-      "meta": "GitHub: github.com/jordantaylor/telemetry-dashboard",
+      "meta": "GitHub: github.com/your-handle/telemetry-dashboard",
       "bullets": [
         "Real-time dashboard for service health: traces, logs, and metrics unified in one view.",
         "Optimized queries and caching; kept p95 interactions under 150ms for typical workloads."
