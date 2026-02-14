@@ -2,30 +2,20 @@
 
 This repository generates a clean, one-page PDF resume from structured data.
 
-## Rationale
+## Overview
 
-Generating a resume via code can be useful when you care about deterministic formatting and automated text extraction:
+This is a small Python + ReportLab tool that turns a resume JSON file into a print-ready, one-page PDF.
 
-- **Consistent formatting:** the PDF layout is deterministic (update content → regenerate → same spacing/margins every time).
-- **Machine-readable text layer:** the output is drawn as real text (not a screenshot), which is typically easier for ATS/HR systems to extract.
-- **ATS-friendly option:** `--style ats` avoids common parsing pitfalls like multi-column alignment and right-justified date columns.
-
-This can improve extractability, but it does not guarantee screening outcomes; content relevance still matters.
+ATS = **Applicant Tracking System** (software used by companies/recruiters to parse, search, and filter resumes). The generator aims for ATS-friendlier output by keeping content single-column and text-first. Default layout is `--style ats`.
 
 - Primary script: `generate_resume_pdf.py`
-- Dependency list: `requirements.txt`
-- Resume input data: `sample_input.json` (passed via `--data`)
+- Dependencies: `requirements.txt`
+- Example input: `sample_input.json` (passed via `--data`)
 - Output (default): `resume_output.pdf` (or whatever you pass via `--output`)
 
-## What it is
+## How it works
 
-A small Python + ReportLab tool that programmatically lays out a resume (header, summary, skills, experience, projects, education, certifications) and writes a print-ready PDF.
-
-This approach is useful when you want repeatable formatting and easy regeneration (e.g., tweak content → rerun → get a consistent PDF).
-
-## How it works (high level)
-
-- `generate_resume_pdf.py` loads `sample_input.json` (or the file you pass via `--data`) and builds a `ResumeData` object.
+- `generate_resume_pdf.py` loads the JSON file you pass via `--data` and builds a `ResumeData` object.
 - The script uses ReportLab’s `Canvas` to draw text and section dividers onto a letter-sized page.
 - It wraps long lines so content fits within the margins.
 - It saves a single-page PDF.
@@ -87,7 +77,7 @@ The JSON file is expected to be an object with these keys (all optional):
 - `education` (array of objects: `{ degree, school, dates }`)
 - `certifications` (array of strings)
 
-If a section is missing or empty, it will simply render as empty in the PDF.
+If a field/section is missing or empty, it will be skipped (not rendered) in the PDF.
 
 ## Setup (Windows)
 
@@ -110,14 +100,14 @@ From the repository root:
 
 ```powershell
 python -m venv .venv
-\.venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 ```
 
 If PowerShell blocks activation:
 
 ```powershell
 Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
-\.venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 ```
 
 ### 3) Install dependencies
