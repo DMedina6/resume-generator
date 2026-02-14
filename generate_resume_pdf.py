@@ -88,6 +88,68 @@ class ResumeData:
     certifications: List[str]
 
 
+@dataclass(frozen=True)
+class TextStyle:
+    """A reusable text style (font + size + fill color)."""
+
+    font_name: str
+    font_size: int
+    color: colors.Color
+
+
+@dataclass(frozen=True)
+class Theme:
+    """Centralized theme tokens for fonts/sizes/colors.
+
+    The goal is to avoid scattering literal font names and hex colors throughout the
+    renderer. If you want to restyle the PDF, change values here instead of hunting
+    through multiple section functions.
+    """
+
+    header_name: TextStyle
+    header_title: TextStyle
+    contact: TextStyle
+    section_title: TextStyle
+    body: TextStyle
+    item_header: TextStyle
+    muted: TextStyle
+    footer: TextStyle
+    rule_color: colors.Color
+
+
+DEFAULT_THEME = Theme(
+    header_name=TextStyle("Helvetica-Bold", 20, colors.HexColor("#111111")),
+    header_title=TextStyle("Helvetica", 11, colors.HexColor("#333333")),
+    contact=TextStyle("Helvetica", 9, colors.HexColor("#444444")),
+    section_title=TextStyle("Helvetica-Bold", 11, colors.HexColor("#222222")),
+    body=TextStyle("Helvetica", 10, colors.HexColor("#222222")),
+    item_header=TextStyle("Helvetica-Bold", 11, colors.HexColor("#222222")),
+    muted=TextStyle("Helvetica", 10, colors.HexColor("#555555")),
+    footer=TextStyle("Helvetica", 8, colors.HexColor("#888888")),
+    rule_color=colors.HexColor("#D6D6D6"),
+)
+
+
+# Theme selection
+# ---------------
+#
+# Most render helpers should not reference DEFAULT_THEME directly; they should read
+# from the *active* theme. This lets callers swap themes by passing `theme=...` to
+# `generate_pdf()` without having to thread `theme` through every function.
+_ACTIVE_THEME: Theme = DEFAULT_THEME
+
+
+def _theme() -> Theme:
+    """Return the currently active theme used by render helpers."""
+    return _ACTIVE_THEME
+
+
+def _apply_text_style(canvas: Canvas, style: TextStyle) -> None:
+    """Apply a `TextStyle` to the canvas (font + fill color)."""
+    canvas.setFont(style.font_name, style.font_size)
+    canvas.setFillColor(style.color)
+
+
 # ----------------------------
 # JSON -> ResumeData
 # ----------------------------
@@ -196,7 +258,7 @@ def _wrap_text(
 def _draw_rule(canvas: Canvas, x: float, y: float, w: float) -> None:
     """Draw a light horizontal divider."""
     # `line(x1, y1, x2, y2)` draws a straight line in the current stroke color.
-    canvas.setStrokeColor(colors.HexColor("#D6D6D6"))
+    canvas.setStrokeColor(_theme().rule_color)
     canvas.setLineWidth(1)
     canvas.line(x, y, x + w, y)
 
@@ -212,8 +274,7 @@ def _draw_section_title(
 ) -> float:
     """Draw a section heading and return the next baseline y position."""
     # ReportLab uses *stateful* drawing: font/color settings stick until changed.
-    canvas.setFont("Helvetica-Bold", 11)
-    canvas.setFillColor(colors.HexColor("#222222"))
+    _apply_text_style(canvas, _theme().section_title)
 
     # ATS: keep headings simple for cleaner text extraction.
     canvas.drawString(x, y, title.upper())
@@ -229,10 +290,11 @@ def _draw_bullets(
     x: float,
     y: float,
     w: float,
-    font_name: str = "Helvetica",
-    font_size: int = 10,
+    font_name: str | None = None,
+    font_size: int | None = None,
     leading: int = 13,
     bullet_char: str = "•",
+    color: colors.Color | None = None,
 ) -> float:
     """Draw a bullet list and return the next baseline y position.
 
@@ -244,7 +306,12 @@ def _draw_bullets(
 
     # `leading` is the vertical spacing between baselines.
 
-    canvas.setFillColor(colors.HexColor("#222222"))
+    theme = _theme()
+    font_name = font_name or theme.body.font_name
+    font_size = font_size or theme.body.font_size
+    color = color or theme.body.color
+
+    canvas.setFillColor(color)
     for b in bullets:
         b = (b or "").strip()
         if not b:
@@ -273,15 +340,15 @@ def _draw_tag_row(canvas: Canvas, tags: List[str], x: float, y: float, w: float)
     """Draw a compact comma-separated tag row (e.g., skills), wrapped."""
     # This is used for the Skills section to keep a keyword-dense line without
     # resorting to multi-column layouts.
-    canvas.setFont("Helvetica", 10)
-    canvas.setFillColor(colors.HexColor("#222222"))
+    theme = _theme()
+    _apply_text_style(canvas, theme.body)
 
     line = ""
     # We build a comma-separated line until it would overflow, then start a new line.
     for tag in tags:
         piece = (", " if line else "") + tag
         candidate = line + piece
-        if canvas.stringWidth(candidate, "Helvetica", 10) <= w:
+        if canvas.stringWidth(candidate, theme.body.font_name, theme.body.font_size) <= w:
             line = candidate
         else:
             canvas.drawString(x, y, line)
@@ -319,14 +386,13 @@ def _draw_header(
 
     if name:
         # `setFillColor` controls text color; `setFont` controls font face/size.
-        c.setFillColor(colors.HexColor("#111111"))
-        c.setFont("Helvetica-Bold", 20)
+        theme = _theme()
+        _apply_text_style(c, theme.header_name)
         c.drawString(x, y, name)
         y -= 18
 
     if title:
-        c.setFont("Helvetica", 11)
-        c.setFillColor(colors.HexColor("#333333"))
+        _apply_text_style(c, theme.header_title)
         c.drawString(x, y, title)
         y -= 16
     elif name:
@@ -341,8 +407,7 @@ def _draw_header(
     linkedin = _clean_str(data.linkedin)
     github = _clean_str(data.github)
 
-    c.setFont("Helvetica", 9)
-    c.setFillColor(colors.HexColor("#444444"))
+    _apply_text_style(c, theme.contact)
 
     contact_lines: List[str] = []
     if style == "ats":
@@ -376,14 +441,20 @@ def _draw_header(
                 c,
                 "  |  ".join(parts),
                 max_width=content_w,
-                font_name="Helvetica",
-                font_size=9,
+                font_name=theme.contact.font_name,
+                font_size=theme.contact.font_size,
             )
 
     if contact_lines:
         # Each `contact_lines` entry may still be long, so we wrap again.
         for line in contact_lines:
-            for wrapped in _wrap_text(c, line, max_width=content_w, font_name="Helvetica", font_size=9):
+            for wrapped in _wrap_text(
+                c,
+                line,
+                max_width=content_w,
+                font_name=theme.contact.font_name,
+                font_size=theme.contact.font_size,
+            ):
                 c.drawString(x, y, wrapped)
                 y -= 11
         y -= 6
@@ -413,10 +484,16 @@ def _draw_summary_section(
         return y
 
     y = _draw_section_title(c, "Summary", x, y, content_w, style=style)
-    c.setFont("Helvetica", 10)
-    c.setFillColor(colors.HexColor("#222222"))
+    theme = _theme()
+    _apply_text_style(c, theme.body)
     # Summary is treated as one paragraph and wrapped across multiple lines.
-    for line in _wrap_text(c, summary, max_width=content_w, font_name="Helvetica", font_size=10):
+    for line in _wrap_text(
+        c,
+        summary,
+        max_width=content_w,
+        font_name=theme.body.font_name,
+        font_size=theme.body.font_size,
+    ):
         c.drawString(x, y, line)
         y -= 13
     y -= 6
@@ -469,8 +546,8 @@ def _draw_experience_section(
 
     y = _draw_section_title(c, "Experience", x, y, content_w, style=style)
     for company, role, dates, bullets in items:
-        c.setFillColor(colors.HexColor("#222222"))
-        c.setFont("Helvetica-Bold", 11)
+        theme = _theme()
+        _apply_text_style(c, theme.item_header)
 
         if style == "ats":
             # ATS: avoid right-aligned date columns.
@@ -484,14 +561,13 @@ def _draw_experience_section(
             if left:
                 c.drawString(x, y, left)
             if dates:
-                c.setFont("Helvetica", 10)
-                c.setFillColor(colors.HexColor("#555555"))
+                _apply_text_style(c, theme.muted)
                 # `drawRightString` aligns the text so its *right edge* is at this x.
                 c.drawRightString(x + content_w, y, dates)
 
         y -= 14
         bullet_char = "-" if style == "ats" else "•"
-        y = _draw_bullets(c, bullets, x, y, content_w, bullet_char=bullet_char)
+        y = _draw_bullets(c, bullets, x, y, content_w, bullet_char=bullet_char, color=theme.body.color)
         y -= 6
     return y
 
@@ -519,8 +595,8 @@ def _draw_projects_section(
 
     y = _draw_section_title(c, "Projects", x, y, content_w, style=style)
     for name, meta, bullets in items:
-        c.setFont("Helvetica-Bold", 11)
-        c.setFillColor(colors.HexColor("#222222"))
+        theme = _theme()
+        _apply_text_style(c, theme.item_header)
 
         if style == "ats":
             # ATS: keep project header as a single left-aligned line.
@@ -533,13 +609,12 @@ def _draw_projects_section(
             if name:
                 c.drawString(x, y, name)
             if meta:
-                c.setFont("Helvetica", 10)
-                c.setFillColor(colors.HexColor("#555555"))
+                _apply_text_style(c, theme.muted)
                 c.drawRightString(x + content_w, y, meta)
 
         y -= 14
         bullet_char = "-" if style == "ats" else "•"
-        y = _draw_bullets(c, bullets, x, y, content_w, bullet_char=bullet_char)
+        y = _draw_bullets(c, bullets, x, y, content_w, bullet_char=bullet_char, color=theme.body.color)
         y -= 6
     return y
 
@@ -566,8 +641,8 @@ def _draw_education_section(
         return y
 
     y = _draw_section_title(c, "Education", x, y, content_w, style=style)
-    c.setFont("Helvetica", 10)
-    c.setFillColor(colors.HexColor("#222222"))
+    theme = _theme()
+    _apply_text_style(c, theme.body)
     for degree, school, dates in items:
         if style == "ats":
             # ATS: keep dates inline to avoid multi-column extraction issues.
@@ -581,9 +656,9 @@ def _draw_education_section(
             if left:
                 c.drawString(x, y, left)
             if dates:
-                c.setFillColor(colors.HexColor("#555555"))
+                c.setFillColor(theme.muted.color)
                 c.drawRightString(x + content_w, y, dates)
-                c.setFillColor(colors.HexColor("#222222"))
+                c.setFillColor(theme.body.color)
         y -= 13
     y -= 6
     return y
@@ -605,11 +680,18 @@ def _draw_certifications_section(
 
     y = _draw_section_title(c, "Certifications", x, y, content_w, style=style)
     bullet_char = "-" if style == "ats" else "•"
-    y = _draw_bullets(c, certs, x, y, content_w, bullet_char=bullet_char)
+    theme = _theme()
+    y = _draw_bullets(c, certs, x, y, content_w, bullet_char=bullet_char, color=theme.body.color)
     return y
 
 
-def generate_pdf(output_path: str, data: ResumeData, *, style: Style = "ats") -> None:
+def generate_pdf(
+    output_path: str,
+    data: ResumeData,
+    *,
+    style: Style = "ats",
+    theme: Theme = DEFAULT_THEME,
+) -> None:
     """Generate a one-page resume PDF.
 
     This generator intentionally does *not* paginate; if content runs off the page,
@@ -629,20 +711,26 @@ def generate_pdf(output_path: str, data: ResumeData, *, style: Style = "ats") ->
     x = margin
     y = page_h - margin  # start from the top margin and move downward
 
-    # Render top-to-bottom; each section returns the next y position.
-    # If a section has no content, it returns the original y unchanged.
-    y = _draw_header(c, data, x=x, y=y, content_w=content_w, style=style)
-    y = _draw_summary_section(c, data, x=x, y=y, content_w=content_w, style=style)
-    y = _draw_skills_section(c, data, x=x, y=y, content_w=content_w, style=style)
-    y = _draw_education_section(c, data, x=x, y=y, content_w=content_w, style=style)
-    y = _draw_certifications_section(c, data, x=x, y=y, content_w=content_w, style=style)
-    y = _draw_experience_section(c, data, x=x, y=y, content_w=content_w, style=style)
-    y = _draw_projects_section(c, data, x=x, y=y, content_w=content_w, style=style)
+    # Activate the requested theme for the duration of rendering.
+    global _ACTIVE_THEME
+    previous_theme = _ACTIVE_THEME
+    _ACTIVE_THEME = theme
+    try:
+        # Render top-to-bottom; each section returns the next y position.
+        # If a section has no content, it returns the original y unchanged.
+        y = _draw_header(c, data, x=x, y=y, content_w=content_w, style=style)
+        y = _draw_summary_section(c, data, x=x, y=y, content_w=content_w, style=style)
+        y = _draw_skills_section(c, data, x=x, y=y, content_w=content_w, style=style)
+        y = _draw_education_section(c, data, x=x, y=y, content_w=content_w, style=style)
+        y = _draw_certifications_section(c, data, x=x, y=y, content_w=content_w, style=style)
+        y = _draw_experience_section(c, data, x=x, y=y, content_w=content_w, style=style)
+        y = _draw_projects_section(c, data, x=x, y=y, content_w=content_w, style=style)
 
-    # Footer timestamp (subtle). Remove if you prefer a "static" resume file.
-    c.setFont("Helvetica", 8)
-    c.setFillColor(colors.HexColor("#888888"))
-    c.drawRightString(x + content_w, margin * 0.6, f"Generated {date.today().isoformat()}")
+        # Footer timestamp (subtle). Remove if you prefer a "static" resume file.
+        _apply_text_style(c, _theme().footer)
+        c.drawRightString(x + content_w, margin * 0.6, f"Generated {date.today().isoformat()}")
+    finally:
+        _ACTIVE_THEME = previous_theme
 
     c.showPage()
     # `save()` finalizes the PDF file.
